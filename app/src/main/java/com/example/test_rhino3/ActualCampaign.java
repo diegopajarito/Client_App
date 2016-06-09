@@ -55,7 +55,6 @@ public class ActualCampaign extends AppCompatActivity {
 
         final JsonObject campaign = new JsonParser().parse(message).getAsJsonObject();
 
-
         final LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setBackgroundColor(Color.WHITE);
@@ -65,7 +64,10 @@ public class ActualCampaign extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT);
         ll.setLayoutParams(llLP);
 
-        show("Q004", campaign, ll);
+        //show("Q003", campaign, ll);
+
+        Displayer myDisplay = new Displayer("khoi", getApplicationContext());
+        myDisplay.show("Q004", campaign, ll, this);
 
         Button bt = new Button(this);
         bt.setText("Next Question");
@@ -77,13 +79,7 @@ public class ActualCampaign extends AppCompatActivity {
             }
         });
 
-
-
-        //Displayer myDisplay = new Displayer("khoi", getApplicationContext());
-        //myDisplay.show("Q004", campaign, ll, this);
-
         setContentView(ll);
-
     }
 
     public void show(String ID, JsonObject cam, LinearLayout layout)
@@ -124,7 +120,7 @@ public class ActualCampaign extends AppCompatActivity {
         }
     }
 
-    public void display(FreeTextSingle obj, final LinearLayout layout)
+    public void common_display(Base_Question obj, final LinearLayout layout)
     {
         System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()));
         String[] quesLabel = obj.getQuestionLabel();
@@ -160,6 +156,12 @@ public class ActualCampaign extends AppCompatActivity {
             }.execute();
         }
 
+    }
+
+    public void display(FreeTextSingle obj, final LinearLayout layout)
+    {
+        common_display(obj, layout);
+
         final EditText edittext = new EditText(this);
         edittext.setText("");
         edittext.setTextColor(Color.BLACK);
@@ -169,39 +171,7 @@ public class ActualCampaign extends AppCompatActivity {
 
     public void display(FreeTextMulti obj, final LinearLayout layout )
     {
-        System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()) + " " + Arrays.toString(obj.getComponent()));
-        String[] quesLabel = obj.getQuestionLabel();
-        TextView tv = new TextView(getApplicationContext());
-        tv.setText(quesLabel[0]);
-        tv.setTextColor(Color.BLACK);
-        layout.addView(tv);
-
-        if (quesLabel[1]!= null)
-        {
-            final String image_URL = quesLabel[1];
-            System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
-            final ImageView imageview = new ImageView(this);
-
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
-                    return null;
-                }
-                @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
-                    {
-                        imageview.setImageBitmap(bmp[0]);
-                        layout.addView(imageview);
-                    }
-                }
-            }.execute();
-        }
+        common_display(obj, layout);
 
         String[] subcomponent = obj.getComponent();
         int size = subcomponent.length;
@@ -224,39 +194,7 @@ public class ActualCampaign extends AppCompatActivity {
 
     public void display(MultipleChoiceSingle obj, final LinearLayout layout)
     {
-        System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()) + " " + Arrays.toString(obj.getComponent()));
-        String[] quesLabel = obj.getQuestionLabel();
-        TextView tv = new TextView(getApplicationContext());
-        tv.setText(quesLabel[0]);
-        tv.setTextColor(Color.BLACK);
-        layout.addView(tv);
-
-        if (quesLabel[1]!= null)
-        {
-            final String image_URL = quesLabel[1];
-            System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
-            final ImageView imageview = new ImageView(this);
-
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
-                    return null;
-                }
-                @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
-                    {
-                        imageview.setImageBitmap(bmp[0]);
-                        layout.addView(imageview);
-                    }
-                }
-            }.execute();
-        }
+        common_display(obj, layout);
 
         String[] subcomponent = obj.getComponent();
         int size = subcomponent.length;
@@ -326,7 +264,7 @@ class Displayer {
         }
     }
 
-    public void display(FreeTextSingle obj, final LinearLayout layout, Context context )
+    public void common_display(Base_Question obj, final LinearLayout layout, Context context )
     {
         System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()));
         String[] quesLabel = obj.getQuestionLabel();
@@ -348,7 +286,7 @@ class Displayer {
                     try {
                         InputStream in = new URL(image_URL).openStream();
                         bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
+                    } catch (Exception e) {  }
                     return null;
                 }
                 @Override
@@ -361,6 +299,11 @@ class Displayer {
                 }
             }.execute();
         }
+    }
+
+    public void display(FreeTextSingle obj, final LinearLayout layout, Context context )
+    {
+        common_display(obj, layout, context);
 
         final EditText edittext = new EditText(context);
         edittext.setText("");
@@ -371,39 +314,7 @@ class Displayer {
 
     public void display(FreeTextMulti obj, final LinearLayout layout, Context context )
     {
-        System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()) + " " + Arrays.toString(obj.getComponent()));
-        String[] quesLabel = obj.getQuestionLabel();
-        TextView tv = new TextView(context);
-        tv.setText(quesLabel[0]);
-        tv.setTextColor(Color.BLACK);
-        layout.addView(tv);
-
-        if (quesLabel[1]!= null)
-        {
-            final String image_URL = quesLabel[1];
-            System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
-            final ImageView imageview = new ImageView(context);
-
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
-                    return null;
-                }
-                @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
-                    {
-                        imageview.setImageBitmap(bmp[0]);
-                        layout.addView(imageview);
-                    }
-                }
-            }.execute();
-        }
+        common_display(obj, layout, context);
 
         String[] subcomponent = obj.getComponent();
         int size = subcomponent.length;
@@ -426,6 +337,22 @@ class Displayer {
 
     public void display(MultipleChoiceSingle obj, final LinearLayout layout, Context context )
     {
+        common_display(obj, layout, context);
+
+        String[] subcomponent = obj.getComponent();
+        int size = subcomponent.length;
+        RadioGroup radiogroup = new RadioGroup(context);
+        for (int i=0;i<size;i++)
+        {
+            RadioButton radioButton = new RadioButton(context);
+            radioButton.setText(subcomponent[i]);
+            radioButton.setTextColor(Color.BLACK);
+            radiogroup.addView(radioButton);
+        }
+        layout.addView(radiogroup);
+    }
+}
+/*
         System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()) + " " + Arrays.toString(obj.getComponent()));
         String[] quesLabel = obj.getQuestionLabel();
         TextView tv = new TextView(context);
@@ -446,7 +373,7 @@ class Displayer {
                     try {
                         InputStream in = new URL(image_URL).openStream();
                         bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
+                    } catch (Exception e) { }
                     return null;
                 }
                 @Override
@@ -459,19 +386,4 @@ class Displayer {
                 }
             }.execute();
         }
-
-        String[] subcomponent = obj.getComponent();
-        int size = subcomponent.length;
-        RadioGroup radiogroup = new RadioGroup(context);
-        for (int i=0;i<size;i++)
-        {
-            RadioButton radioButton = new RadioButton(context);
-            radioButton.setText(subcomponent[i]);
-            radioButton.setTextColor(Color.BLACK);
-            radiogroup.addView(radioButton);
-        }
-        layout.addView(radiogroup);
-
-    }
-
-}
+         */
