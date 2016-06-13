@@ -15,3 +15,9 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# rhino (javascript)
+-dontwarn org.mozilla.javascript.**
+-dontwarn org.mozilla.classfile.**
+-keep class org.mozilla.javascript.** { *; }
+

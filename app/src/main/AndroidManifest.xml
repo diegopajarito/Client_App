@@ -26,6 +26,10 @@
         <activity
             android:name=".ActualCampaign"
             android:label="@string/title_activity_actual_campaign"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Questionnaire_Done"
+            android:label="@string/title_activity_questionnaire__done"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
