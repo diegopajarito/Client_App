@@ -40,5 +40,5 @@ dependencies {
 
     compile group: 'GeoC_QuestionHierarchy', name: 'Question_Hierarchy', version: '1.0-SNAPSHOT'
 
-    //compile group: 'GeoC_AnswerObject', name: 'AnswerObject', version: '1.0-SNAPSHOT'
+    compile group: 'GeoC_AnswerObject', name: 'AnswerObject', version: '1.0-SNAPSHOT'
 }

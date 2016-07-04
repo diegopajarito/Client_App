@@ -22,8 +22,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
-    MyString def = new MyString("");
-    public static String CONSTANT1 = "constant1";
+    String campaign_configuration = null;
+    public static String KEY1 = "key1 of MainActivity.java";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +49,10 @@ public class MainActivity extends AppCompatActivity {
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!def.getString().equals(""))
+                if (campaign_configuration != null)
                 {
                     Intent intent = new Intent(getApplicationContext(), ActualCampaign.class);
-                    intent.putExtra(CONSTANT1, def.getString());
+                    intent.putExtra(KEY1, campaign_configuration);
                     startActivity(intent);
                 }
             }
@@ -65,20 +65,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... urls) {
 
-            //a.setNumber(GET2(urls[0]));
             return GET(urls[0]);
-
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
             Toast.makeText(getBaseContext(), "Campaign downloaded!", Toast.LENGTH_LONG).show();
-            //etResponse.setText(result);
-            //abc.setNumber(Integer.parseInt(result));
-            def.setString(result);
-            //System.out.println(String.valueOf(abc.getNumber()));
-            System.out.println(def.getString());
 
+            campaign_configuration = result;
+            System.out.println("Campaign config is " + campaign_configuration);
         }
     }
 
@@ -96,9 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static String GET(String url){
         InputStream inputStream = null;
-        String result = "";
+        String result = null;
         try {
-
             // create HttpClient
             HttpClient httpclient = new DefaultHttpClient();
 
@@ -111,8 +105,6 @@ public class MainActivity extends AppCompatActivity {
             // convert inputstream to string
             if(inputStream != null)
                 result = convertInputStreamToString(inputStream);
-            else
-                result = "Did not work!";
 
         } catch (Exception e) {
             Log.d("InputStream", e.getLocalizedMessage());
@@ -120,163 +112,6 @@ public class MainActivity extends AppCompatActivity {
 
         return result;
     }
-
-    public class MyString{
-        String str = "blank";
-
-        public MyString(String a){
-            this.str = a;
-        }
-        public String getString(){
-            return str;
-        }
-        public void setString(String a){
-            str = a;
-        }
-    }
 }
 
-/*
-class Base_Question {
-    protected String quesType;
-    protected String quesID;
-    protected String[] quesLabel;
 
-    //Constructor
-    public Base_Question (String Type, String ID, String[] Label) {
-        this.quesType = Type;
-        this.quesID = ID;
-        this.quesLabel = Label;
-    }
-
-    @Override
-    public String toString() {
-        return String.format(" Type = %s, ID = %s, Label = %s", quesType, quesID, Arrays.toString(quesLabel));
-    }
-
-    public String getQuestionType(){
-        return this.quesType;
-    }
-
-    public String getQuestionID(){
-        return this.quesID;
-    }
-
-    public String[] getQuestionLabel(){
-        return this.quesLabel;
-    }
-
-}
-
-class Branch {
-    String expression;
-    String next;
-
-    public Branch(String expr, String nextID )
-    {
-        this.expression = expr;
-        this.next = nextID;
-    }
-    public String getExpression() {return this.expression;}
-    public String getNext() {return this.next;}
-}
-
-class Campaign {
-    String Campaign_ID;
-    String Campaign_Description;
-    String startQuestion;
-    ArrayList Question_Array;
-    ArrayList workflow;
-
-    public Campaign(String ID, String description, String start, ArrayList quesArray, ArrayList workflow)
-    {
-        this.Campaign_ID = ID;
-        this.Campaign_Description = description;
-        this.startQuestion = start;
-        this.Question_Array = quesArray;
-        this.workflow = workflow;
-    }
-
-    public String getID() {return this.Campaign_ID;}
-    public String getDescription() {return this.Campaign_Description;}
-    public String getStartQuestion() {return this.startQuestion;}
-    public ArrayList getQuestionArray() {return this.Question_Array;}
-    public ArrayList getWorkflow() {return this.workflow;}
-
-    public Base_Question getQuestionByID(String ID){
-        Base_Question result = null;
-        for (int i=0;i<Question_Array.size();i++)
-        {
-            if (    ((Base_Question) Question_Array.get(i)).getQuestionID().equals(ID) )
-                result = (Base_Question) Question_Array.get(i);
-        }
-        return result;
-
-    }
-
-}
-
-class FreeTextMulti extends Base_Question {
-    String[] subcomponent;
-
-    public FreeTextMulti(String Type, String ID, String[] Label, String[] subcomponent) {
-        super(Type, ID, Label);
-        this.subcomponent = subcomponent;
-    }
-
-    @Override
-    public String toString() {
-        return String.format(" Type = %s, ID = %s, Label = %s, Subcomponent = %s", quesType, quesID, Arrays.toString(quesLabel), Arrays.toString(subcomponent));
-    }
-
-    public String[] getComponent() {
-        return this.subcomponent;
-    }
-
-}
-
-class FreeTextSingle extends Base_Question{
-    public FreeTextSingle(String Type, String ID, String[] Label) {
-        super(Type, ID, Label);
-    }
-
-    @Override
-    public String toString() {
-        return String.format(" Type = %s, ID = %s, Label = %s", quesType, quesID, Arrays.toString(quesLabel));
-    }
-
-}
-
-class MultipleChoiceSingle extends Base_Question {
-    String[] subcomponent;
-
-    public MultipleChoiceSingle(String Type, String ID, String[] Label, String[] subcomponent) {
-        super(Type, ID, Label);
-        this.subcomponent = subcomponent;
-    }
-
-    @Override
-    public String toString() {
-        return String.format(" Type = %s, ID = %s, Label = %s, Subcomponent = %s", quesType, quesID, Arrays.toString(quesLabel), Arrays.toString(subcomponent));
-    }
-
-    public String[] getComponent() {
-        return this.subcomponent;
-    }
-
-}
-
-class Workflow_Element {
-    String QuesID;
-    ArrayList Condition;
-
-    public Workflow_Element (String quesID, ArrayList array)
-    {
-        this.QuesID = quesID;
-        this.Condition = array;
-    }
-
-    public String getID() {	return this.QuesID;	}
-    public ArrayList getCondition() { return this.Condition; }
-}
- */

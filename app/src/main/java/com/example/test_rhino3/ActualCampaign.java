@@ -20,17 +20,10 @@ import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import org.joda.time.DateTime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.WrapFactory;
-import org.mozilla.javascript.annotations.JSFunction;
-import org.mozilla.javascript.annotations.JSGetter;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import GeoC_AnswerObject.Answer;
+import GeoC_AnswerObject.DateWrapFactory;
+import GeoC_AnswerObject.MyAnswerWrapper;
 import GeoC_QuestionHierarchy.BaseQuestion_Deserializer;
 import GeoC_QuestionHierarchy.Base_Question;
 import GeoC_QuestionHierarchy.Branch;
@@ -58,9 +54,6 @@ public class ActualCampaign extends AppCompatActivity {
     public static String FreeTextSingle = "FreeTextSingle";
     public static String FreeTextMulti = "FreeTextMulti";
     public static String MultipleChoiceSingle = "MultipleChoiceSingle";
-    public static String Question_Array = "Question_Array";
-    public static String workflow = "workflow";
-    public static String StartQuestion = "startQuestion";
 
     public static String CONTENT = "content from ArrayList that stores Answer objects";
     public static String CampaignID = "the ID of the current campaign";
@@ -84,17 +77,16 @@ public class ActualCampaign extends AppCompatActivity {
         final Gson gson = gsonBuilder.create();
 
         Intent intent = getIntent();
-        final String message = intent.getStringExtra(MainActivity.CONSTANT1);
+        final String message = intent.getStringExtra(MainActivity.KEY1);
 
         System.out.println(message);
-
-        final JsonObject campaign = new JsonParser().parse(message).getAsJsonObject();
 
         final Campaign campaign_obj = gson.fromJson(message, Campaign.class);
 
         String startQuestion = campaign_obj.getStartQuestion();
-        ArrayList<Base_Question> ques_array = campaign_obj.getQuestionArray();
-        final ArrayList<Workflow_Element> workflow_element = campaign_obj.getWorkflow();
+        List<Base_Question> ques_array = campaign_obj.getQuestionArray();
+
+        final List<Workflow_Element> workflow_element = campaign_obj.getWorkflow();
         for(int i=0;i<workflow_element.size();i++)
         {
             System.out.println(workflow_element.get(i).getID());
@@ -104,17 +96,16 @@ public class ActualCampaign extends AppCompatActivity {
             }
         }
 
-        final String[] pointer = {startQuestion};
+        final String[] pointer = new String[]{startQuestion};
+        System.out.println("First question is -----------> " + pointer[0]);
 
         final Map<String , String> map = new HashMap<String, String>();
-        JsonArray question_array = campaign.get(Question_Array).getAsJsonArray();
 
-        int number_of_question = question_array.size();
+        int number_of_question = ques_array.size();
         final String[] variable_name = new String[number_of_question];
-        for (int i=0;i<question_array.size();i++)
+        for (int i=0;i<ques_array.size();i++)
         {
-            JsonElement temp_element = question_array.get(i);
-            Base_Question temp_basequestion = gson.fromJson(temp_element,Base_Question.class);
+            Base_Question temp_basequestion = gson.fromJson(gson.toJson(ques_array.get(i)),Base_Question.class);
             variable_name[i] = temp_basequestion.getQuestionID();
             map.put(temp_basequestion.getQuestionID(),temp_basequestion.getQuestionType());
         }
@@ -141,7 +132,7 @@ public class ActualCampaign extends AppCompatActivity {
 
         //show(pointer[0], campaign, ll, tag_list);
         final Displayer myDisplay = new Displayer("khoi", getApplicationContext());
-        myDisplay.show(pointer[0], campaign, ll, this, tag_list);
+        myDisplay.show(pointer[0], campaign_obj, ll, this, tag_list);
 
         final Intent intent2 = new Intent(this, Questionnaire_Done.class);
 
@@ -164,15 +155,15 @@ public class ActualCampaign extends AppCompatActivity {
                     System.out.println("Full tag is " + full_tag + " short tag is " + short_tag);
                     v = ll.findViewWithTag(full_tag);
 
-                    if (map.get(short_tag).equals("FreeTextSingle")) {
+                    if (map.get(short_tag).equals(FreeTextSingle)) {
                         EditText et = (EditText) v.findViewWithTag(full_tag);
                         System.out.println("Print from NEXT button " + et.getText().toString());
                         replies.add(et.getText().toString());
-                    } else if (map.get(short_tag).equals("FreeTextMulti")) {
+                    } else if (map.get(short_tag).equals(FreeTextMulti)) {
                         EditText et = (EditText) v.findViewWithTag(full_tag);
                         System.out.println("Print from NEXT button " + et.getText().toString());
                         replies.add(et.getText().toString());
-                    } else if (map.get(short_tag).equals("MultipleChoiceSingle")) {
+                    } else if (map.get(short_tag).equals(MultipleChoiceSingle)) {
                         RadioGroup radioGroup = (RadioGroup) v.findViewWithTag(full_tag);
 
                         int selectedId = radioGroup.getCheckedRadioButtonId();
@@ -193,8 +184,8 @@ public class ActualCampaign extends AppCompatActivity {
                 answer_array[count[0]] = ans;
                 count[0]++;
 
-                for (int i = 0; i < answer_array.length; i++)
-                    answer_array[i].print();
+                //for (int i = 0; i < answer_array.length; i++)
+                //    answer_array[i].print();
 
                 try {
                     System.out.println("After " + campaign_obj.getStartQuestion() + " next question should be " + flow(pointer[0],answer_array,workflow_element,variable_name));
@@ -212,7 +203,7 @@ public class ActualCampaign extends AppCompatActivity {
                     ll.removeAllViews();
                     tag_list = new ArrayList<String>();
                     //show(pointer[0], campaign, ll, tag_list);
-                    myDisplay.show(pointer[0],campaign,ll,getApplicationContext(),tag_list);
+                    myDisplay.show(pointer[0], campaign_obj, ll, getApplicationContext(), tag_list);
                     ll.addView(bt);
                 }
                 else
@@ -272,7 +263,7 @@ public class ActualCampaign extends AppCompatActivity {
         return result;
     }
 
-    public static String flow(String quesID, Answer[] answer_array, ArrayList<Workflow_Element> workflow_arraylist, String[] var_name) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+    public static String flow(String quesID, Answer[] answer_array, List<Workflow_Element> workflow_arraylist, String[] var_name) throws InvocationTargetException, InstantiationException, IllegalAccessException {
         String result = null;
         for (int i=0;i< workflow_arraylist.size();i++)
         {
@@ -284,20 +275,12 @@ public class ActualCampaign extends AppCompatActivity {
                 if (branch_list.size() >1)
                 {
                     String[] expression = new String[branch_list.size()];
-                    String[] next = new String[branch_list.size()];
 
                     for (int j=0;j<branch_list.size();j++)
                     {
                         expression[j] = branch_list.get(j).getExpression();
-                        next[j] = branch_list.get(j).getNext();
-                    }
-
-                    for (int j=0;j<branch_list.size();j++)
-                    {
                         if ( ((boolean) check(expression[j],answer_array,var_name)) == true   )
-                        {
-                            result = next[j];
-                        }
+                        result = branch_list.get(j).getNext();
                     }
                 }
                 else if (branch_list.size()==1)
@@ -307,141 +290,6 @@ public class ActualCampaign extends AppCompatActivity {
             }
         }
         return result;
-    }
-
-    public void show(String ID, JsonObject cam, LinearLayout layout, ArrayList tag_list)
-    {
-        FreeTextSingle temp_FreeTextSingle = null;
-        FreeTextMulti temp_FreeTextMulti = null;
-        MultipleChoiceSingle temp_MultipleChoiceSingle = null;
-
-        JsonArray array = cam.get(Question_Array).getAsJsonArray();
-        for (int i=0;i<array.size();i++)
-        {
-            Gson gson = new Gson();
-            JsonElement temp_element = array.get(i);
-            Base_Question temp_basequestion = gson.fromJson(temp_element,Base_Question.class);
-
-            if (temp_basequestion.getQuestionID().equals(ID))
-            {
-                if (temp_basequestion.getQuestionType().equals(FreeTextSingle))
-                {
-                    temp_FreeTextSingle = gson.fromJson(temp_element,FreeTextSingle.class);
-                    display(temp_FreeTextSingle, layout, tag_list);
-                }
-
-                else if (temp_basequestion.getQuestionType().equals(FreeTextMulti))
-                {
-                    temp_FreeTextMulti = gson.fromJson(temp_element, FreeTextMulti.class);
-                    display(temp_FreeTextMulti, layout, tag_list);
-
-                }
-
-                else if (temp_basequestion.getQuestionType().equals(MultipleChoiceSingle))
-                {
-                    temp_MultipleChoiceSingle = gson.fromJson(temp_element, MultipleChoiceSingle.class);
-                    display(temp_MultipleChoiceSingle, layout, tag_list);
-                }
-
-            }
-        }
-    }
-
-    public void common_display(Base_Question obj, final LinearLayout layout)
-    {
-        System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()));
-        String[] quesLabel = obj.getQuestionLabel();
-        TextView tv = new TextView(getApplicationContext());
-        tv.setText(quesLabel[0]);
-        tv.setTextColor(Color.BLACK);
-        layout.addView(tv);
-
-        if (quesLabel[1]!= null)
-        {
-            final String image_URL = quesLabel[1];
-            System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
-            final ImageView imageview = new ImageView(this);
-
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { /*log error*/ }
-                    return null;
-                }
-                @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
-                    {
-                        imageview.setImageBitmap(bmp[0]);
-                        layout.addView(imageview);
-                    }
-                }
-            }.execute();
-        }
-    }
-
-    public void display(FreeTextSingle obj, final LinearLayout layout, ArrayList tag_list)
-    {
-        common_display(obj, layout);
-
-        final EditText edittext = new EditText(this);
-        edittext.setText("");
-        edittext.setTextColor(Color.BLACK);
-        edittext.requestFocus();
-        String tag = obj.getQuestionID() + "_";
-        edittext.setTag(tag);
-        tag_list.add(tag);
-        layout.addView(edittext);
-    }
-
-    public void display(FreeTextMulti obj, final LinearLayout layout, ArrayList tag_list)
-    {
-        common_display(obj, layout);
-
-        String[] subcomponent = obj.getComponent();
-        int size = subcomponent.length;
-        TextView[] textview = new TextView[size];
-        EditText[] edittext = new EditText[size];
-        for (int i=0;i<subcomponent.length;i++)
-        {
-            textview[i] = new TextView(getApplicationContext());
-            textview[i].setText(subcomponent[i]);
-            textview[i].setTextColor(Color.BLACK);
-            layout.addView(textview[i]);
-
-            edittext[i] = new EditText(getApplicationContext());
-            edittext[i].setText("");
-            edittext[i].setTextColor(Color.BLACK);
-            if (i==0) edittext[i].requestFocus();
-            String tag = obj.getQuestionID() + "_" + String.valueOf(i);
-            edittext[i].setTag(tag);
-            tag_list.add(tag);
-            layout.addView(edittext[i]);
-        }
-    }
-
-    public void display(MultipleChoiceSingle obj, final LinearLayout layout, ArrayList tag_list)
-    {
-        common_display(obj, layout);
-
-        String[] subcomponent = obj.getComponent();
-        int size = subcomponent.length;
-        RadioGroup radiogroup = new RadioGroup(getApplicationContext());
-        String tag = obj.getQuestionID() + "_";
-        radiogroup.setTag(tag);
-        tag_list.add(tag);
-        for (int i=0;i<size;i++)
-        {
-            RadioButton radioButton = new RadioButton(getApplicationContext());
-            radioButton.setText(subcomponent[i]);
-            radioButton.setTextColor(Color.BLACK);
-            radiogroup.addView(radioButton);
-        }
-        layout.addView(radiogroup);
     }
 }
 
@@ -454,46 +302,44 @@ class Displayer {
         this.context = context;
     }
 
-    public void show(String ID, JsonObject cam, LinearLayout layout, android.content.Context context, ArrayList tag_list)    {
+    public void show(String ID, Campaign cam, LinearLayout layout, android.content.Context context, ArrayList tag_list) {
         String FreeTextSingle = "FreeTextSingle";
         String FreeTextMulti = "FreeTextMulti";
         String MultipleChoiceSingle = "MultipleChoiceSingle";
-        String Question_Array = "Question_Array";
 
         FreeTextSingle temp_FreeTextSingle = null;
         FreeTextMulti temp_FreeTextMulti = null;
         MultipleChoiceSingle temp_MultipleChoiceSingle = null;
 
-        JsonArray array = cam.get(Question_Array).getAsJsonArray();
-        for (int i=0;i<array.size();i++)
+        Gson gson = new Gson();
+
+        ArrayList<Base_Question> question_array = (ArrayList) cam.getQuestionArray();
+        for (int i=0;i<question_array.size();i++)
         {
-            Gson gson = new Gson();
-            JsonElement temp_element = array.get(i);
-            Base_Question temp_basequestion = gson.fromJson(temp_element,Base_Question.class);
+            Base_Question temp_basequestion = question_array.get(i);
 
             if (temp_basequestion.getQuestionID().equals(ID))
             {
                 if (temp_basequestion.getQuestionType().equals(FreeTextSingle))
                 {
-                    temp_FreeTextSingle = gson.fromJson(temp_element,FreeTextSingle.class);
+                    temp_FreeTextSingle = gson.fromJson(gson.toJson(question_array.get(i)),FreeTextSingle.class);
                     display(temp_FreeTextSingle, layout, context, tag_list);
                 }
 
                 else if (temp_basequestion.getQuestionType().equals(FreeTextMulti))
                 {
-                    temp_FreeTextMulti = gson.fromJson(temp_element, FreeTextMulti.class);
+                    temp_FreeTextMulti = gson.fromJson(gson.toJson(question_array.get(i)), FreeTextMulti.class);
                     display(temp_FreeTextMulti, layout, context, tag_list);
-
                 }
 
                 else if (temp_basequestion.getQuestionType().equals(MultipleChoiceSingle))
                 {
-                    temp_MultipleChoiceSingle = gson.fromJson(temp_element, MultipleChoiceSingle.class);
+                    temp_MultipleChoiceSingle = gson.fromJson(gson.toJson(question_array.get(i)), MultipleChoiceSingle.class);
                     display(temp_MultipleChoiceSingle, layout, context, tag_list);
                 }
-
             }
         }
+
     }
 
     public void common_display(Base_Question obj, final LinearLayout layout, android.content.Context context )    {
@@ -508,23 +354,24 @@ class Displayer {
         {
             final String image_URL = quesLabel[1];
             System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
+            //final Bitmap[] bmp = new Bitmap[1];
             final ImageView imageview = new ImageView(context);
 
-            new AsyncTask<Void, Void, Void>() {
+            new AsyncTask<Void, Void, Bitmap>() {
                 @Override
-                protected Void doInBackground(Void... params) {
+                protected Bitmap doInBackground(Void... params) {
                     try {
                         InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
+                        /*bmp[0] =*/ return BitmapFactory.decodeStream(in);
                     } catch (Exception e) {  }
                     return null;
                 }
                 @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
+                protected void onPostExecute(Bitmap result) {
+                    if (/*bmp[0]*/ result!= null)
                     {
-                        imageview.setImageBitmap(bmp[0]);
+                        imageview.setImageBitmap(result /* bmp[0]*/);
+
                         layout.addView(imageview);
                     }
                 }
@@ -539,6 +386,7 @@ class Displayer {
         edittext.setText("");
         edittext.setTextColor(Color.BLACK);
         edittext.requestFocus();
+        //edittext.setInputType(InputType.TYPE_CLASS_DATETIME);
         String tag = obj.getQuestionID() + "_";
         edittext.setTag(tag);
         tag_list.add(tag);
@@ -591,223 +439,3 @@ class Displayer {
 }
 
 
-interface AnswerInterface {
-
-    int count();
-
-    Object getValue(int index);
-
-    Object getValue();
-
-    List<Object> getValues();
-
-    String getID();
-
-}
-
-class Answer implements AnswerInterface{
-    private List<Object> list = new ArrayList<Object>();
-    private String questionID;
-    private DateTime dt;
-
-    public Answer(String ID ){
-        this.questionID = ID;
-    }
-
-    public Answer(String ID, List list, DateTime datetime) {
-        this.questionID = ID;
-        this.list = list;
-        this.dt = datetime;
-    }
-
-    public void setValues(List list){
-        this.list = list;
-    }
-
-    public int count() {
-        int result = 0;
-
-        if (this.list.get(0) instanceof String )
-        {
-            for (int i=0;i < this.list.size();i++)
-                if (  !((String) list.get(i)).isEmpty() && list.get(i) != null &&  !((String) list.get(i)).trim().isEmpty()  ) { result++;}
-            //System.out.println("Non-empty is " + result);
-            return result;
-        }
-        else return this.list.size();
-    }
-
-    public Object getValue(int index) {
-        return list.get(index);
-    }
-
-    public Object getValue() {
-        if (this.list.size() ==1)
-            return this.list.get(0);
-        else throw new RuntimeException("This answer has more than 1 field");
-    }
-
-    public List<Object> getValues() {
-        return this.list;
-    }
-
-    public String getID(){
-        return this.questionID;
-    }
-
-    public void print(){
-        System.out.println("Question " + this.questionID + " has answers " + this.list.toString() + " at " + this.dt.toString());
-    }
-
-}
-
-class DateWrapFactory extends WrapFactory {
-
-    public Object wrap(org.mozilla.javascript.Context cx, Scriptable scope, Object obj, Class<?>
-            staticType) {
-
-
-        if (obj instanceof DateTime) {
-            // Construct a JS date object
-            long time = ((DateTime) obj).getMillis();
-            System.out.println("Milisec is "+ time);
-            return cx.newObject(scope, "Date", new Object[] {time});
-        }
-
-
-        return super.wrap(cx, scope, obj, staticType);
-    }
-
-}
-
-class MyAnswerWrapper extends ScriptableObject implements AnswerInterface {
-    private Answer ans;
-
-    public MyAnswerWrapper(){
-        this.ans = null;
-    }
-
-    public MyAnswerWrapper(Object answer){
-        this.ans = (Answer) answer;
-    }
-
-    @JSGetter
-    public int count() {
-        return ans.count();
-    }
-
-    @JSFunction
-    public Object getValue(int index){
-        return ans.getValue(index);
-    }
-
-    @JSGetter
-    public Object getValue() {
-        return ans.getValue();
-    }
-
-    @JSGetter
-    public List<Object> getValues() {
-        return ans.getValues();
-    }
-
-    @Override
-    public String getID() {
-        return ans.getID();
-    }
-
-    @Override
-    public String getClassName(){
-        return "MyWrapperAnswer";
-    }
-
-}
-
-
-
-
-/*
-        System.out.println(obj.getQuestionID() + " " + obj.getQuestionType() + " " + Arrays.toString(obj.getQuestionLabel()) + " " + Arrays.toString(obj.getComponent()));
-        String[] quesLabel = obj.getQuestionLabel();
-        TextView tv = new TextView(context);
-        tv.setText(quesLabel[0]);
-        tv.setTextColor(Color.BLACK);
-        layout.addView(tv);
-
-        if (quesLabel[1]!= null)
-        {
-            final String image_URL = quesLabel[1];
-            System.out.println("Image URL is " + image_URL);
-            final Bitmap[] bmp = new Bitmap[1];
-            final ImageView imageview = new ImageView(context);
-
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        InputStream in = new URL(image_URL).openStream();
-                        bmp[0] = BitmapFactory.decodeStream(in);
-                    } catch (Exception e) { }
-                    return null;
-                }
-                @Override
-                protected void onPostExecute(Void result) {
-                    if (bmp[0] != null)
-                    {
-                        imageview.setImageBitmap(bmp[0]);
-                        layout.addView(imageview);
-                    }
-                }
-            }.execute();
-        }
-*/
-
-/*
-List<Object> temp = new ArrayList<Object>();
-        temp.add("Khoi");
-        temp.add("UJI");
-        temp.add("Lenovo");
-        temp.add("Audi");
-        temp.add("BMW");
-        temp.add("");
-        temp.add("");
-        temp.add("    ");
-        temp.add("");
-        temp.add("");
-        Answer a1 = new Answer("Q001", temp, new DateTime());
-
-        List<Object> temp2 = new ArrayList<Object>();
-        temp2.add(2);
-        temp2.add(3);
-        temp2.add(4);
-        temp2.add(5);
-        temp2.add(6);
-        Answer a2 = new Answer("Q002", temp2, new DateTime());
-
-        List<Object> temp3 = new ArrayList<Object>();
-        temp3.add(new DateTime());
-        temp3.add(new DateTime("2016-04-20"));
-        Answer a3 = new Answer("Q003", temp3, new DateTime());
-
-        List<Object> temp4 = new ArrayList<Object>();
-        //temp4.add("Khoi");
-        temp4.add("España");
-        Answer a4 = new Answer("Q004", temp4, new DateTime());
-
-        Answer[] ans_array = new Answer[]{a1,a2,a3,a4};
-
-        String[] var_name = new String[]{"Q001","Q002","Q003","Q004","blabla",""};
-
-        Object obj = null;
-        try {
-            obj = check("Q004.value ", ans_array, var_name);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        System.out.println(obj);
-
- */

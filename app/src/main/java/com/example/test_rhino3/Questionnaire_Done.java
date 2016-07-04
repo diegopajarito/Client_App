@@ -18,10 +18,16 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
+
 
 public class Questionnaire_Done extends AppCompatActivity {
     String server = "http://192.168.1.138:8880/send_result/";
+    static String IV = "AAAAAAAAAAAAAAAA";
+    static String encryptionKey = "0123456789abcdef";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +46,25 @@ public class Questionnaire_Done extends AppCompatActivity {
 
         Intent intent = getIntent();
         final String tobesent_text = intent.getStringExtra(ActualCampaign.CONTENT);
+         String tobesent_with_padding = tobesent_text;
+        int plaintext_length_without_padding = tobesent_text.length();
+        int padding_size = ((plaintext_length_without_padding/16)+1)*16 - plaintext_length_without_padding ;
+        for (int i=0;i<padding_size;i++)
+        {
+            tobesent_with_padding += "0";
+        }
+        System.out.println(tobesent_with_padding);
+        byte[] cipher = new byte[0];
+        try {
+              cipher = encrypt(tobesent_with_padding, encryptionKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        final String hexString = byteArrayToHexString(cipher);
+        System.out.println(byteArrayToHexString(cipher));
+
+
         String campaignID = intent.getStringExtra(ActualCampaign.CampaignID);
 
         System.out.println(campaignID + " has been done!");
@@ -52,7 +77,7 @@ public class Questionnaire_Done extends AppCompatActivity {
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new SendPostRequest().execute(myURL, tobesent_text);
+                new SendPostRequest().execute(myURL, hexString);
 
             }
         });
@@ -124,4 +149,24 @@ public class Questionnaire_Done extends AppCompatActivity {
                     Toast.LENGTH_LONG).show();
         }
     }
+
+    public static byte[] encrypt(String plainText, String encryptionKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec key = new SecretKeySpec(encryptionKey.getBytes("UTF-8"), "AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
+        return cipher.doFinal(plainText.getBytes("UTF-8"));
+    }
+
+    public static String byteArrayToHexString(byte[] array) {
+        StringBuffer hexString = new StringBuffer();
+        for (byte b : array) {
+            int intVal = b & 0xff;
+            if (intVal < 0x10)
+                hexString.append("0");
+            hexString.append(Integer.toHexString(intVal));
+        }
+        return hexString.toString();
+    }
+
+
 }
