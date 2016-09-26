@@ -40,5 +40,9 @@ dependencies {
 
     compile group: 'GeoC_QuestionHierarchy', name: 'Question_Hierarchy', version: '1.0-SNAPSHOT'
 
-    compile group: 'GeoC_AnswerObject', name: 'AnswerObject', version: '1.0-SNAPSHOT'
+    // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
+
+
+    //compile group: 'GeoC_AnswerObject', name: 'AnswerObject', version: '1.0-SNAPSHOT'
 }

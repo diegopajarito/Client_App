@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -30,6 +31,18 @@
         <activity
             android:name=".Questionnaire_Done"
             android:label="@string/title_activity_questionnaire__done"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ListOfCampaign"
+            android:label="@string/title_activity_list_of_campaign"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ListFavoriteCampaign"
+            android:label="@string/title_activity_list_favorite_campaign"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ActualFavCampaign"
+            android:label="@string/title_activity_actual_fav_campaign"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

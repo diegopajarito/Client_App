@@ -5,9 +5,7 @@
     <string name="title_activity_questionnaire__done">Questionnaire_Done</string>
     <string name="title_activity_list_of_campaign">ListOfCampaign</string>
 
-    <string name="go_to_Campaign">Go to Campaign in EN</string>
-    <string name="title_activity_list_favorite_campaign">ListFavoriteCampaign</string>
-    <string name="title_activity_actual_fav_campaign">ActualFavCampaign</string>
+<string name="go_to_Campaign">Ir a campaña</string>
 
 
 </resources>

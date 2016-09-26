@@ -1,6 +1,7 @@
 package com.example.test_rhino3;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,8 +16,13 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -25,9 +31,14 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class Questionnaire_Done extends AppCompatActivity {
-    String server = "http://192.168.1.138:8880/send_result/";
-    static String IV = "AAAAAAAAAAAAAAAA";
-    static String encryptionKey = "0123456789abcdef";
+    //public static final String MyPREFERENCES = "MyPrefs" ;
+    SharedPreferences pref;
+
+    public static String server = "http://192.168.1.138:8880/send_result";
+    public static String IV = "AAAAAAAAAAAAAAAA";
+    public static String encryptionKey = "0123456789abcdef";
+
+    String campaign = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +76,68 @@ public class Questionnaire_Done extends AppCompatActivity {
         System.out.println(byteArrayToHexString(cipher));
 
 
-        String campaignID = intent.getStringExtra(ActualCampaign.CampaignID);
+        final String campaignID = intent.getStringExtra(ActualCampaign.CampaignID);
+        final String campaignConfig = intent.getStringExtra(ActualCampaign.CampaignConfig);
+
 
         System.out.println(campaignID + " has been done!");
 
-        final String myURL = server + campaignID;
+        HashMap<String , String> map = new HashMap<String, String>();
+        map.put("paddingSize", String.valueOf(padding_size));
+        map.put("CampaignID",campaignID);
+        map.put("userID","khoiboo");
 
+        String param = null;
+        try {
+            param = convertMaptoParam(map);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        final Intent intent2 = new Intent(this, MainActivity.class);
+
+        final String myURL = server + /*campaignID +*/ "?" + param;
+
+        Button addFavorite = new Button(this);
+        addFavorite.setText("Add to your favorite list");
+        ll.addView(addFavorite);
+        addFavorite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                pref = getSharedPreferences("pref.xml", MODE_PRIVATE);
+                final SharedPreferences.Editor editor = pref.edit();
+                Set<String> tempFavCampaign = pref.getStringSet("fav.xml",null);
+                System.out.println("Size of favoriteCampaign is " + tempFavCampaign.size());
+                tempFavCampaign.add(campaignConfig);
+                System.out.println("After adding a new campaign, size of favoriteCampaign is " + tempFavCampaign.size());
+                editor.putStringSet("fav.xml", tempFavCampaign);
+                editor.commit();
+            }
+        });
+
+        //Send the results LATER
+        final Button sendLater = new Button(this);
+        sendLater.setText("Send later");
+        ll.addView(sendLater);
+        sendLater.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                pref = getSharedPreferences("pref.xml", MODE_PRIVATE);
+                final SharedPreferences.Editor editor = pref.edit();
+                Set<String> tempSet = pref.getStringSet("pref.xml",null);
+                tempSet.add(tobesent_text);
+                editor.putStringSet(MainActivity.sendLater_String, tempSet);
+                editor.commit();
+
+
+                startActivity(intent2);
+            }
+        });
+
+        //Send the results NOW
         Button bt = new Button(this);
         bt.setText("Send results");
         ll.addView(bt);
@@ -79,6 +146,7 @@ public class Questionnaire_Done extends AppCompatActivity {
             public void onClick(View view) {
                 new SendPostRequest().execute(myURL, hexString);
 
+                startActivity(intent2);
             }
         });
 
@@ -95,6 +163,8 @@ public class Questionnaire_Done extends AppCompatActivity {
                 String text = arg[0];
 
                 URL url = new URL(text); // here is your URL path
+
+                System.out.println("URL is " + url.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(15000 /* milliseconds */);
@@ -148,6 +218,23 @@ public class Questionnaire_Done extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), result,
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    public static String convertMaptoParam(HashMap<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            if (first)
+                first = false;
+            else
+                result.append("&");
+
+            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
+
+        return result.toString();
     }
 
     public static byte[] encrypt(String plainText, String encryptionKey) throws Exception {
